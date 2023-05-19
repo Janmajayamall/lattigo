@@ -186,5 +186,36 @@ func distance(a, b, c, d uint64) uint64 {
 }
 
 func main() {
-	obliviousRiding()
+	paramDef := bfv.PN13QP218
+	paramDef.T = 0x3ee0001
+	params, err := bfv.NewParametersFromLiteral(paramDef)
+
+	if err != nil {
+		panic(err)
+	}
+
+	encoder := bfv.NewEncoder(params)
+	kgen := bfv.NewKeyGenerator(params)
+	sk, _ := kgen.GenKeyPair()
+	encryptor := bfv.NewEncryptor(params, sk)
+	decryptor := bfv.NewDecryptor(params, sk)
+	rkg := kgen.GenRelinearizationKey(sk, 1)
+	evaluator := bfv.NewEvaluator(params, rlwe.EvaluationKey{Rlk: rkg})
+
+	pt := bfv.NewPlaintext(params, params.MaxLevel())
+	pt2 := bfv.NewPlaintext(params, params.MaxLevel())
+	m := make([]uint64, 1<<params.LogN())
+	encoder.Encode(m, pt)
+	encoder.Encode(m, pt2)
+
+	ct := encryptor.EncryptNew(pt)
+	ct2 := encryptor.EncryptNew(pt2)
+
+	ct3 := evaluator.MulNew(ct, ct2)
+	ct4 := evaluator.RelinearizeNew(ct3)
+
+	std, min, max := bfv.Noise(params, ct4, decryptor)
+
+	fmt.Println("%d %d %d", std, min, max)
+
 }
