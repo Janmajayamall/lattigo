@@ -258,6 +258,7 @@ func (eval *evaluator) tensorAndRescale(ct0, ct1, ctOut *rlwe.Ciphertext) {
 	level := utils.MinInt(utils.MinInt(ct0.Level(), ct1.Level()), ctOut.Level())
 
 	levelQMul := eval.levelQMul[level]
+	// fmt.Println(levelQMul)
 
 	ctOut.Resize(ctOut.Degree(), level)
 

@@ -13,7 +13,7 @@ func BenchmarkBFV(b *testing.B) {
 
 	defaultParams := DefaultParams
 	if testing.Short() {
-		defaultParams = DefaultParams[:2]
+		defaultParams = DefaultParams[len(DefaultParams)-1:]
 	}
 
 	if *flagParamString != "" {

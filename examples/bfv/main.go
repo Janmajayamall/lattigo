@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/bits"
+	"time"
 
 	"github.com/tuneinsight/lattigo/v4/rlwe"
 	"github.com/tuneinsight/lattigo/v4/utils"
@@ -186,8 +187,8 @@ func distance(a, b, c, d uint64) uint64 {
 }
 
 func main() {
-	paramDef := bfv.PN13QP218
-	paramDef.T = 0x3ee0001
+	paramDef := bfv.PN15QP880
+	paramDef.T = 65537
 	params, err := bfv.NewParametersFromLiteral(paramDef)
 
 	if err != nil {
@@ -211,10 +212,21 @@ func main() {
 	ct := encryptor.EncryptNew(pt)
 	ct2 := encryptor.EncryptNew(pt2)
 
-	ct3 := evaluator.MulNew(ct, ct2)
-	ct4 := evaluator.RelinearizeNew(ct3)
+	ct3 := rlwe.NewCiphertext(params.Parameters, 2, params.MaxLevel())
+	start := time.Now()
+	for i := 0; i < 100; i++ {
+		evaluator.Mul(ct, ct2, ct3)
+	}
+	t := time.Now()
+	elapsed := t.Sub(start)
+	fmt.Println(elapsed)
 
-	std, min, max := bfv.Noise(params, ct4, decryptor)
+	std, min, max := bfv.Noise(params, ct3, decryptor)
+	fmt.Println("%d %d %d", std, min, max)
+
+	evaluator.Relinearize(ct3, ct3)
+
+	std, min, max = bfv.Noise(params, ct3, decryptor)
 
 	fmt.Println("%d %d %d", std, min, max)
 
